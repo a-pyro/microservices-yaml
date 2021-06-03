@@ -1,0 +1,159 @@
+openapi: 3.0.1
+info:
+  title: Check-me-in API
+  description: Hotel Check-in microservice interface
+  version: 0.0.1
+servers:
+  - url: http://localhost:3001
+    description: Local server
+  - url: https://strivezon-api.herokuapp.com
+    description: Deployed server
+tags:
+  - name: rooms
+    description: rooms operations
+
+paths:
+  /rooms:
+    get:
+      tags:
+        - rooms
+      summary: Returns a list of occupied rooms
+      description: Optional extended description in CommonMark or HTML.
+      responses:
+        '200': # status code
+          description: A list of rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+        '500':
+          $ref: '#/components/responses/GenericServerError'
+  /rooms/{roomN}:
+    get:
+      tags:
+        - rooms
+      summary: get list of guests in the room
+      description: return a list of people (an array of Person) in the room
+      parameters:
+        - in: path
+          name: roomN
+          required: true
+          schema:
+            type: string
+          description: The number of the room
+      responses:
+        '200': # status code
+          description: The array of guests in the room
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Guest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+        - rooms
+      description: Add a guest in the room
+      summary: Add guest
+      parameters:
+        - in: path
+          name: roomN
+          required: true
+          schema:
+            type: string
+          description: The number of the room in which we want to add the guest
+      requestBody:
+        description: Guest to add
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Guest'
+      responses:
+        '201': # status code
+          description: guest added, return the room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    delete:
+      tags:
+        - rooms
+      description: Check-out a guest from a room
+      parameters:
+        - in: path
+          name: roomN
+          required: true
+          schema:
+            type: string
+          description: The room nr from which we want to check-out the guest
+      responses:
+        '204': # status code
+          description: Guest checked-out
+        '404': # status code
+          $ref: '#/components/responses/NotFound'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+components:
+  responses:
+    NotFound:
+      description: The specific resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Some problems with your request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Bearer token missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    GenericServerError:
+      description: A problem on the server occurred
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Guest:
+      type: object
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+        age:
+          type: number
+    Room:
+      type: object
+      properties:
+        roomN:
+          type: number
+          minimum: 1
+          maximum: 50
+        guests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Guest'
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
