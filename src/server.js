@@ -1,8 +1,8 @@
 import express from 'express';
 import * as OpenApiValidator from 'express-openapi-validator';
 import cors from 'cors';
-import connectDB from './db/index.js';
-
+import mongoose from 'mongoose';
+const { connect } = mongoose;
 const app = express();
 
 app.use(cors());
@@ -17,10 +17,22 @@ app.use(
   })
 );
 
-const port = process.env.PORT;
+const PORT = process.env.PORT;
 
-connectDB().then(
-  app.listen(port, () => {
-    console.log(`app spinning on port ${port}`);
+connect(process.env.MONGO_URL, {
+  useNewUrlParser: true,
+  useCreateIndex: true,
+  useFindAndModify: false,
+  useUnifiedTopology: true,
+})
+  .then(() => {
+    app.listen(PORT, () => {
+      if (process.env.NODE_ENV === 'production') {
+        // no need to configure it manually on Heroku
+        console.log('Server running on cloud on port: ', PORT);
+      } else {
+        console.log('Server running locally on port: ', PORT);
+      }
+    });
   })
-);
+  .catch((err) => console.log(err));
